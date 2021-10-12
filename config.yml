@@ -1,0 +1,109 @@
+logging:
+  version: 1
+
+  formatters:
+    simple:
+      format: "[%(levelname)s] [%(name)s]: %(message)s"
+
+    complex:
+      format: "[%(asctime)s] [%(levelname)s] [%(name)s]: %(message)s"
+
+
+  handlers:
+    console:
+      class: logging.StreamHandler
+      level: DEBUG
+      formatter: simple
+
+    file:
+      class: logging.handlers.RotatingFileHandler
+      maxBytes: 10485760  # 10 MB
+      backupCount: 5
+      level: DEBUG
+      formatter: complex
+      filename : monitor.log
+
+  loggers:
+    HttpMonitor:
+      level: INFO
+      handlers: [console, file]
+      propagate: yes
+
+    Dispatcher:
+      level: INFO
+      handlers: [file]
+      propagate: yes
+
+    Translator:
+      level: INFO
+      handlers: [file]
+      propagate: yes
+
+    DataProcessing:
+      level: INFO
+      handlers: [console, file]
+      propagate: yes
+
+    WebPage:
+      level: INFO
+      handlers: [console]
+      propagate: yes
+
+
+blacklist:
+  - 연재
+  - 웹툰
+
+image_dowanload_timeout: 10
+
+monitoring:
+  aliases:
+    seoji_monitor: &seoji_monitor
+      url: "http://seoji.nl.go.kr/landingPage/SearchAjax.do"
+      timeout: 4
+      check_every: 2
+      method: 'POST'
+
+    test_monitor: &test_monitor
+      url: "http://localhost:8080/get_isbn/33"
+      timeout: 999
+      check_every: 3
+      method: 'GET'
+
+    seoji_payload: &seoji_payload
+      fq_select: "tSrch_total"
+      facet.field: "EBOOK_YN"
+      sort: "INPUT_DATE DESC"
+      wt: "json"
+      rows: 10
+      start: 0
+      page: 1
+
+
+  monitors:
+    -
+      name: monitor1
+      <<: *seoji_monitor
+      description: "monitor 1 - (Serial) Illustrator 2021"
+      payload:
+        <<: *seoji_payload
+        tSrch_total: "(연재) 삽화가 2021"
+        q: "(연재) 삽화가 2021"
+
+    -
+      name: monitor2
+      <<: *seoji_monitor
+      description: "monitor 2 - (Serial) Author 2021"
+      payload:
+        <<: *seoji_payload
+        tSrch_total: "(연재) 원작자 2021"
+        q: "(연재) 원작자 2021"
+
+    -
+      name: test
+      <<: *test_monitor
+      description: "test1 - Serialization"
+      payload:
+        <<: *seoji_payload
+        tSrch_total: "연재"
+        q: "연재"
